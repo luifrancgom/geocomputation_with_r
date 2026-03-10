@@ -1,0 +1,126 @@
+---
+title: Geographic data in R
+format: 
+  html:
+    toc: true
+    number-sections: true
+    code-fold: true
+    embed-resources: true
+---
+
+```{r}
+#| label: load-packages
+library(sf)
+library(spData)
+```
+
+# Prerrequisites
+
+Install the following packages:
+
+
+```r
+install.packages("sf")
+install.packages("terra")
+install.packages("spData")
+install.packages(
+    "spDataLarge", 
+    repos = "https://geocompr.r-universe.dev")
+```
+
+For linux check the [Posit Public Package Manager](https://packagemanager.posit.co) and apply the `SETUP` for your case. This repository is configured by default using Positron. Check:
+
+```r
+getOption("repos")
+```
+
+For example for `Ubuntu 24.04 LTS`:
+
+```
+                                                          P3M 
+"https://packagemanager.posit.co/cran/__linux__/noble/latest" 
+                                                         CRAN 
+                                "https://cloud.r-project.org" 
+```
+
+# Introduction
+
+Fundamental geographic data models:
+
+- Vector
+- Raster
+
+The **vector data model** represents the world using points, lines and polygons. The **raster data model** divides the surface up into cells of constant size.
+
+Which to use?
+
+- Vector data tends to dominate the social sciences because human settlements tend to have discrete borders
+- Raster dominates many enfironmental sciences partially becasue the reliance on remote sensing data
+
+# Vector data
+
+The geographic vecto data model is based on points located withing a coordinate reference system, **CRS**.
+
+Points ca represent self-standing features or they can be linked together to form more complex geometries such as lines and polygons.
+
+IN this system, for example, London can be represented by the coordinates `c(-0.1, 51.5)`. This means that its location is `-0.1` degrees east and `51.5` degrees north of the origin. The origin in this case is at `0` degrees longitude (Prime Meridian) and `0` degrees latitude (Equator) in a geographic (lon/lat) CRS.
+
+For this section, it is sufficient to know that coordinates consist of two numbers representing distances from an origin, usually in $x$ and $y$ dimensions.
+
+## `sf` package
+
+- **GDAL**: reading, writing and manipulating geographic data formats
+- **PROJ**: coordinate system transformations
+- **GEOS**: planar geometry engine for operations such as calculating buffers and centroids on data with a projected CRS
+- **S2**: a spherical geometry engine
+
+As an example when loading `sf`:
+
+```
+Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
+```
+
+### Simple features
+
+Simple features is an open standard developed and endorsed by the Open Geospatial Consortium (OGC). Simple features is a hierarchical data model taht represents a wide rande of geometry types.
+
+Simple feature types fully supported by `sf`:
+
+- Multilinestring
+- Multipoint
+- Multipolygon
+- Geometry collection
+- Polygon
+- Point
+- Line string
+
+Raster data classes are not supported by `sf`. For more information check the site [Simple Features for R](https://r-spatial.github.io/sf/) and the vignettes:
+
+```r
+vignette(package = "sf")
+vignetter("sf1")
+```
+
+Simple feature objects in R are store in a data frame, with geographic data occupying a special column, usually name `geom` or `geometry`.
+
+We are going to use the `world` dataset provided by `spData`:
+
+```{r}
+class(world)
+names(world)
+```
+
+`sf` objects can be plotted quickly with the function `plot()`. For example:
+
+```{r}
+plot(world, max.plot = 10)
+```
+
+In this case 10 variables from `world` are plot except `geom` where are the polygons. Also treating geographic objects as regular data frames with spatial powers nas many advantages, especially if you are already used to working with data frames.
+
+```{r}
+world["lifeExp"] |>
+  summary()
+```
+
+In this case also the geomtry (`geom`) is reported.
