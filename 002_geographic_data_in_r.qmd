@@ -12,6 +12,7 @@ format:
 #| label: load-packages
 library(sf)
 library(spData)
+library(tidyverse)
 ```
 
 # Prerrequisites
@@ -213,6 +214,333 @@ Lets try another visualization by adding circles that represent the population o
 ```{r}
 plot(world["continent"], reset = FALSE)
 cex <- sqrt(world$pop) / 10000
-world_cents <- st_centroid(world, of_largest = TRUE)
+world_cents <- st_centroid(world, of_largest_polygon = TRUE)
 plot(st_geometry(world_cents), add = TRUE, cex = cex)
 ```
+
+In this case `st_centroid` gives the centroid of a geometry and the argument `of_largest_polygon` with the option `TRUE` finds the single part with the greatest area and uses its center. This is because many countries are multipoligons so by default a centroid might end up in the ocean between the mainland and an island.
+
+`sf` plot method also has arguments specific to geographic data, `expandBB`, for example, can be used to plot and `sf` object in context: it takes a numeric vector of length four that expands the bounding box of the plot relative to zero in the following order:
+
+- Bottom
+- Left
+- Top
+- Right
+
+This is used to plot india in the context of its giant Asian neighbors, with and emphasis on China to the east, in the following code chunk:
+
+```{r}
+india = world[world$name_long == "India", ]
+plot(
+  st_geometry(india),
+  expandBB = c(0, 0.2, 0.1, 1),
+  col = "gray",
+  lwd = 3
+)
+plot(st_geometry(world_asia), add = TRUE)
+```
+
+### Geometry types
+
+Geometries are the basic building blocks of simple features. Simple features in R can take on one of the 18 geometry types supported by the `sf` package. In this part we will focus on:
+
+- `POINT`
+- `LINESTRING`
+- `POLYGON`
+- `MULTIPOINT`
+- `MULTILINESTRING`
+- `MULTYPOLYGON`
+- `GEOMETRYCOLLECTION`
+
+The basis for each geometry type is the point. A point is simply a coordinate in two-, three or four-dimensional space (see `vignetter("sf1")` for more information):
+
+- `POINT (5,2)`
+
+A linestring is a sequence of points with a straight line connectiong the points:
+
+- `LINESTRING (1 5, 4 4, 4 1, 2 2, 3 2)`
+
+A polygon is a sequence of points that form a closed, non-intersecting ring. Closed means that the first and the last point of a polygon have the same coordinates
+
+- `POLYGON ((1 5, 2 2, 4 1, 4 4, 1 5))`
+
+**Note**: See `1 5` at the start and end 
+
+So far we have created geometries with only one geometric entity per feature. Simple feature standard also allows multiple geometries of a single type to exist within a single feature with "multi" version of each geometry type.
+
+- Multipoint: `MULTIPOINT (5 2, 1 3, 3 4, 3 2)`
+- Multilinestring: `MULTILINESTRING ((1 5, 4 4, 4 1, 2 2, 3 2), (1 2, 2 4))`
+- Multipolygon: `MULTIPOLYGON ((1 5, 2 2, 4 1, 4 4, 1 5), (0 2, 1 2, 1 3, 0 3, 0 2))`
+
+Finally a geometry collection can contain any combination of geometries including (multi)points and linestrings.
+
+- Geometry collection: `GEOMETRYCOLLECTION (MULTIPOINT (5 2, 1 3, 3 4, 3 2), LINESTRING (1 5, 4 4, 4 1, 2 2, 3 2))`
+
+### The sf class
+
+Simple features consist of 2 main parts:
+
+- Geometries
+- Non-geographic attributes
+
+Geometries come from a `sfc` object while non-geographic attributes are taken from a `data.frame` or `tibble`. Non-geographic attributes represent the name of the feature or other attributes such as measured values, groups and other things.
+
+To illustrate attribures, we will represent a temperature of 25°C in London on June 21, 2023. This example contains a geometry (coordinates) and 3 attributes with 3 different classes (place name, temperature and date). Objects of class `sf` represent such data by combining the attributes (`data.frame`) with simple feature geometry column (`sfc`). They are created with `st_sf()` with the simple feature geometry column (`sfc`). They are created with `st_sf()` as illustrated below, which creates the London example described above:
+
+
+```{r}
+lnd_point = st_point(c(0.1, 51.5)) # sfg object
+lnd_geom = st_sfc(lnd_point, crs = "EPSG:4326") # sfc object
+lnd_attrib = tibble(
+  name = "London",
+  temperature = 25,
+  date = ymd("2023-06-21")
+)
+lnd_sf = st_sf(lnd_attrib, geometry = lnd_geom)
+```
+
+What just happened? First, the coordinates were used to create the simple feature geometry (`sfg`). Second, the geometry was converted into a simple feature geometry column (`sfc`), with a CRS. Third, attributes were stored in a `tibble`, which has combined with the `sfc`, with `st_sf()`. This results in an `sf` object, as demonstrated below:
+
+```{r}
+lnd_sf
+class(lnd_point)
+class(lnd_geom)
+class(lnd_sf)
+```
+
+### Simple feature geometries (`sfg`)
+
+The `sfg` class represents the different simple feature geomtry types in R:
+
+- Point
+- Linestring
+- Polygon
+
+And their "multi" equivalents.
+
+Usually you are spared the tedious task of creating geometries on your own since you can simply import and already existing spatial file. However, there are a set of functions to create simple feature geomtry objects (`sfg`) from scratch, if needed. 
+
+The names of these functions are simple and consistent, as the all start with `st_` prefix and end with the name of the geometry type:
+
+- A point: `st_point`
+- A linestring: `st_linestring()`
+- A polygon: `st_polygon`
+- A multipoint: `st_multipoint()`
+- A multilinestring: `st_multiline_string()`
+- A multipolygon: `st_multipolygon()`
+- A geometry collection: `st_geometrycollection()`
+
+`sfg` objects can be created from 3 base R data types:
+
+1. A numeric vector: a single point
+2. A matrix: a set of points, where each row represents a point, a multipoint or linestring
+3. A list: a colletion of objects such as matrices, multilinestrings or geometry collections
+
+The function `st_point()` creates single points form numeric vectors:
+
+```{r}
+st_point(c(5, 2)) # XY point (2D)
+st_point(c(5, 2, 3)) # XYZ point (3D)
+st_point(c(5, 2, 1), dim = "XYM") # XYM point (3D with an additional variable, typically measurement accuracy)
+st_point(c(5, 2, 3, 1)) # XYZM
+```
+
+The `XYM` type must be specified using the `dim` argument (which is a short for dimension)
+
+By contrast, use matrices in the case of multipoint (`st_multipoint()`) and linestring (`st_linestring`) objects:
+
+```{r}
+multipoint_matrix = rbind(
+  c(5, 2),
+  c(1, 3),
+  c(3, 4),
+  c(3, 2)
+)
+st_multipoint(multipoint_matrix)
+
+linestring_matrix = rbind(
+  c(1, 5),
+  c(4, 4),
+  c(4, 1),
+  c(2, 2),
+  c(3, 2)
+)
+st_linestring(linestring_matrix)
+```
+
+Finally, use lists for the creation of multilinestrings, (multi-)polygons and geometry collections:
+
+```{r}
+## POLYGON
+polygon_lists = list(
+  rbind(
+    c(1, 5),
+    c(2, 2),
+    c(4, 1),
+    c(4, 4),
+    c(1, 5)
+  )
+)
+st_polygon(polygon_lists)
+```
+
+
+```{r}
+# POLYGON with a hole
+polygon_border = rbind(
+  c(1, 5),
+  c(2, 2),
+  c(4, 1),
+  c(4, 4),
+  c(1, 5)
+)
+polygon_hole = rbind(
+  c(2, 4),
+  c(3, 4),
+  c(3, 3),
+  c(2, 3),
+  c(2, 4)
+)
+polygon_with_hole_list = list(
+  polygon_border,
+  polygon_hole
+)
+st_polygon(polygon_with_hole_list)
+```
+
+```{r}
+# MULTILINESTRING
+multilinestring_list = list(
+  rbind(
+    c(1, 5),
+    c(4, 4),
+    c(2, 2),
+    c(3, 2)
+  )
+)
+st_multilinestring(multilinestring_list)
+```
+
+```{r}
+# MULTIPOLYGON
+multipolygon_list = list(
+  list(
+    rbind(
+      c(1, 5),
+      c(2, 2),
+      c(4, 1),
+      c(4, 4),
+      c(1, 5)
+    )
+  ),
+  list(
+    rbind(
+      c(0, 2),
+      c(1, 2),
+      c(1, 3),
+      c(0, 3),
+      c(0, 2)
+    )
+  )
+)
+st_multipolygon(multipolygon_list)
+```
+
+```{r}
+## GEOMETRYCOLLECTION
+geometrycollection_list = list(
+  st_multipoint(multipoint_matrix),
+  st_linestring(linestring_matrix)
+)
+st_geometrycollection(geometrycollection_list)
+```
+
+### Simple feature columns (sfc)
+
+One `sfg` object contains only a single simple feature geometry. A simple feature geometry column (`sfc`) is a list of `sfg` objects, which is additionaly abel to contain information about (`sfc`) is a list of `sfg` objects, which is additionally able to contain information about the Coordinate Reference System - CRS in use.4
+
+For instance, to combine 2 simploe features into one object with 2 features, we can use the `st_sfc()` function. This is important since `sfc` represents the geometry column in `sf` data frames:
+
+```{r}
+# sfc POINT
+point1 = st_point(c(5, 2))
+point2 = st_point(c(1, 3))
+points_sfc = st_sfc(point1, point2)
+points_sfc
+```
+
+In most cases, an `sfc` object contains objects of the same geometry type. Therefore, when we convert `sfg` objects of type plygon into a simple feature geometry column, we would also end up with an `sfc` object of type polygon, which can be verified with `st_geometry_type()`. Equally, a geometry column of multilinestrings would result in an `sfc` object of type multilinestring:
+
+```{r}
+# sfc POLYGON
+polygon_list1 = list(
+  rbind(
+    c(1, 5),
+    c(2, 2),
+    c(4, 1),
+    c(4, 4),
+    c(1, 5)
+  )
+)
+polygon1 = st_polygon(polygon_list1)
+polygon_list2 = list(
+  rbind(
+    c(0, 2),
+    c(1, 2),
+    c(1, 3),
+    c(0, 3),
+    c(0, 2)
+  )
+)
+polygon2 = st_polygon(polygon_list2)
+polygon_sfc = st_sfc(
+  polygon1,
+  polygon2
+)
+st_geometry_type(polygon_sfc)
+```
+
+```{r}
+multilinestring_list1 = list(
+  rbind(c(1, 5), c(4, 4), c(4, 1), c(2, 2), c(3, 2)),
+  rbind(c(1, 2), c(2, 4))
+)
+multilinestring1 = st_multilinestring((multilinestring_list1))
+multilinestring_list2 = list(
+  rbind(c(2, 9), c(7, 9), c(5, 6), c(4, 7), c(2, 7)),
+  rbind(c(1, 7), c(3, 8))
+)
+multilinestring2 = st_multilinestring((multilinestring_list2))
+multilinestring_sfc = st_sfc(multilinestring1, multilinestring2)
+st_geometry_type(multilinestring_sfc)
+```
+
+It is also possible to create an `sfc` object from `sfg` objects with different geometry types:
+
+```{r}
+point_multilinestring_sfc = st_sfc(
+  point1,
+  multilinestring1
+)
+st_geometry(point_multilinestring_sfc)
+```
+
+As mentioned before, `sfc` objects can additionally store information on the CRS. The default values is `NA` (NOT AVAILABLE), as can be verified with `st_crs()`:
+
+```{r}
+st_crs(points_sfc)
+```
+
+All geometries in `sfc` objects must have the same CRS. ACRS can be specifies with the `crs` argument of `st_sfc()` (or `st_sf()`), which takes a CRS identifier provied as a text string, such as `crs = "EPSG:4326"`
+
+
+```{r}
+points_sfc_wgs = st_sfc(
+  point1,
+  point2,
+  crs = "EPSG:4326"
+)
+st_crs(points_sfc_wgs)
+```
+
+## The sfheaders package
