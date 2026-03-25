@@ -103,3 +103,64 @@ asia |>
     # ggplot2 adds about 5% extra space
     expand = FALSE
   )
+
+### The sf class
+lnd_point = st_point(c(0.1, 51.5)) # sfg object
+lnd_geom = st_sfc(lnd_point, crs = "EPSG:4326") # sfc object
+lnd_attrib = tibble(
+  name = "London",
+  temperature = 25,
+  date = ymd("2023-06-21")
+)
+lnd_sf = st_sf(lnd_attrib, geometry = lnd_geom)
+
+### Simple feature geometries (sfg)
+multipoint_matrix = rbind(
+  c(5, 2),
+  c(1, 3),
+  c(3, 4),
+  c(3, 2)
+)
+class(multipoint_matrix)
+st_multipoint(multipoint_matrix)
+
+linestring_matrix = rbind(
+  c(1, 5),
+  c(4, 4),
+  c(4, 1),
+  c(2, 2),
+  c(3, 2)
+)
+st_linestring(linestring_matrix)
+
+## POLYGON
+polygon_lists = list(
+  rbind(
+    c(1, 5),
+    c(2, 2),
+    c(4, 1),
+    c(4, 4),
+    c(1, 5)
+  )
+)
+st_polygon(polygon_lists)
+
+polygon_border = rbind(
+  c(1, 5),
+  c(2, 2),
+  c(4, 1),
+  c(4, 4),
+  c(1, 5)
+)
+polygon_hole = rbind(
+  c(2, 4),
+  c(3, 4),
+  c(3, 3),
+  c(2, 3),
+  c(2, 4)
+)
+polygon_with_hole_list = list(
+  polygon_border,
+  polygon_hole
+)
+st_polygon(polygon_with_hole_list)

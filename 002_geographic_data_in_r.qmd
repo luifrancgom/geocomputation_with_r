@@ -13,6 +13,7 @@ format:
 library(sf)
 library(spData)
 library(tidyverse)
+library(sfheaders)
 ```
 
 # Prerrequisites
@@ -544,3 +545,57 @@ st_crs(points_sfc_wgs)
 ```
 
 ## The sfheaders package
+
+`sfheaders` is an R package that speeds-up the construction, conversion and manipulation of `sf` objects. If focuses on building `sf` objects from vectors, matrices and dataframes, rapidly without depending on the `sf` library.
+
+The simples use case of `sfheaders` is demonstrated in the code chunks below with examples of building `sfg`, `sfc` and `sf` objects showing:
+
+- A vector converted to `sfg_POINT`
+- A matrix converted to `sfg_LINESTRING`
+- A data frame converted to `sfg_POLYGON`
+
+We will start by creating the simplest possible `sfg` object, a single coordinate pair, assigned to a vector named `v`:
+
+```{r}
+v = c(1, 1)
+v_sfg_sfh = sfg_point(obj = v)
+v_sfg_sfh
+class(v_sfg_sfh)
+```
+
+The next examples show how `sfheaders` creates `sfg` objects from matrices and data frames:
+
+
+```{r}
+# matrix
+m = matrix(1:8, ncol = 2)
+sfg_linestring(obj = m)
+
+# dataframes
+df = data.frame(x = 1:4, y = 4:1)
+sfg_polygon(obj = df)
+```
+
+Reusing the objects `v`, `m` and `df` we can also build simple feature columns (`sfc`) as follows (ouputs not shown):
+
+
+```{r}
+sfc_point(obj = v)
+sfc_linestring(obj = m)
+sfc_polygon(obj = df)
+```
+
+Similarly, `sf` objects can be created as follows:
+
+```{r}
+sf_point(obj = v)
+sf_linestring(obj = m)
+sf_polygon(obj = df)
+```
+
+In each of these examples, the CRS is not defined. If you plan on doing any calculations or geometric operations using `sf` functions, we encourage you to set the CRS:
+
+```{r}
+df_sf = sf_polygon(obj = df)
+st_crs(df_sf) = "EPSG:4326"
+```
