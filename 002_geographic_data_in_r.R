@@ -3,6 +3,8 @@ library(sf)
 library(spData)
 library(spDataLarge)
 library(tidyverse)
+library(sfheaders)
+library(terra)
 
 # sf objects ----
 class(world)
@@ -164,3 +166,11 @@ polygon_with_hole_list = list(
   polygon_hole
 )
 st_polygon(polygon_with_hole_list)
+
+# matrix
+m = matrix(1:8, ncol = 2)
+sfg_linestring(obj = m)
+
+# dataframes
+df = data.frame(x = 1:4, y = 4:1)
+sfg_polygon(obj = df)
