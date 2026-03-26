@@ -2370,6 +2370,7 @@ window.Quarto = {
   <li><a href="#basic-map-making" id="toc-basic-map-making" class="nav-link" data-scroll-target="#basic-map-making"><span class="header-section-number">4.3</span> Basic map-making</a></li>
   <li><a href="#raster-classes" id="toc-raster-classes" class="nav-link" data-scroll-target="#raster-classes"><span class="header-section-number">4.4</span> Raster classes</a></li>
   </ul></li>
+  <li><a href="#coordinate-reference-systems-crs" id="toc-coordinate-reference-systems-crs" class="nav-link" data-scroll-target="#coordinate-reference-systems-crs"><span class="header-section-number">5</span> Coordinate Reference Systems (CRS)</a></li>
   </ul>
 </nav>
 </div>
@@ -3461,7 +3462,110 @@ min value   :     1
 max value   :    36 </code></pre>
 </div>
 </div>
+<p>In this case the resolution is:</p>
+<p><span class="math display">\[resolution = \frac{1.5 - (-1.5)}{6}, \frac{1.5 - (-1.5)}{6} = \frac{3}{6}, \frac{3}{6} = 0.5, 0.5\]</span></p>
+<p>A way to understand this <code>new_raster</code> object is to convert is as a matrix:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb115"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb115-1"><a href="#cb115-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as.matrix</span>(</span>
+<span id="cb115-2"><a href="#cb115-2" aria-hidden="true" tabindex="-1"></a>  new_raster,</span>
+<span id="cb115-3"><a href="#cb115-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">wide =</span> <span class="cn">TRUE</span></span>
+<span id="cb115-4"><a href="#cb115-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>     [,1] [,2] [,3] [,4] [,5] [,6]
+[1,]    1    2    3    4    5    6
+[2,]    7    8    9   10   11   12
+[3,]   13   14   15   16   17   18
+[4,]   19   20   21   22   23   24
+[5,]   25   26   27   28   29   30
+[6,]   31   32   33   34   35   36</code></pre>
+</div>
+</div>
+<p>The unit of the resolution is that of the underlying CRS. Here, it is degrees, because the default CRS of raster objects is WGS84. However, one can specify any other CRS with the <code>crs</code> argument.</p>
+<p>The <code>SpatRatester</code> class also handles multiple layers, which typically corresponds to a single multi-spectral satellite fiel or a time-series of rasters.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb117"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a>multi_raster_file <span class="ot">=</span> <span class="fu">system.file</span>(</span>
+<span id="cb117-2"><a href="#cb117-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;raster/landsat.tif&quot;</span>,</span>
+<span id="cb117-3"><a href="#cb117-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">package =</span> <span class="st">&quot;spDataLarge&quot;</span></span>
+<span id="cb117-4"><a href="#cb117-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb117-5"><a href="#cb117-5" aria-hidden="true" tabindex="-1"></a>multi_rast <span class="ot">=</span> <span class="fu">rast</span>(multi_raster_file)</span>
+<span id="cb117-6"><a href="#cb117-6" aria-hidden="true" tabindex="-1"></a>multi_rast</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>class       : SpatRaster 
+size        : 1428, 1128, 4  (nrow, ncol, nlyr)
+resolution  : 30, 30  (x, y)
+extent      : 301905, 335745, 4111245, 4154085  (xmin, xmax, ymin, ymax)
+coord. ref. : WGS 84 / UTM zone 12N (EPSG:32612) 
+source      : landsat.tif 
+names       : landsat_1, landsat_2, landsat_3, landsat_4 
+min values  :      7550,      6404,      5678,      5252 
+max values  :     19071,     22051,     25780,     31961 </code></pre>
+</div>
+</div>
+<p><code>nlyr</code> retrieves the number of layers stored in a <code>SpatRaster</code> object:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb119"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nlyr</span>(multi_rast)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 4</code></pre>
+</div>
+</div>
+<p>For multi-layer raster objects, layers ca be selected with <code>[[</code> and <code>$</code> operators, for example with commands <code>multi_rast[[&quot;landsat_1]]</code> and <code>muti_rast$landsat_1</code>. The <code>terra::subset()</code> can also be used to select layers. It accepts a layer number or its name as the second argument:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb121"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a>multi_rast3 <span class="ot">=</span> <span class="fu">subset</span>(multi_rast, <span class="dv">3</span>)</span>
+<span id="cb121-2"><a href="#cb121-2" aria-hidden="true" tabindex="-1"></a>multi_rast3</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>class       : SpatRaster 
+size        : 1428, 1128, 1  (nrow, ncol, nlyr)
+resolution  : 30, 30  (x, y)
+extent      : 301905, 335745, 4111245, 4154085  (xmin, xmax, ymin, ymax)
+coord. ref. : WGS 84 / UTM zone 12N (EPSG:32612) 
+source      : landsat.tif 
+name        : landsat_3 
+min value   :      5678 
+max value   :     25780 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb123"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a>multi_rast4 <span class="ot">=</span> <span class="fu">subset</span>(multi_rast, <span class="st">&quot;landsat_4&quot;</span>)</span>
+<span id="cb123-2"><a href="#cb123-2" aria-hidden="true" tabindex="-1"></a>multi_rast4</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>class       : SpatRaster 
+size        : 1428, 1128, 1  (nrow, ncol, nlyr)
+resolution  : 30, 30  (x, y)
+extent      : 301905, 335745, 4111245, 4154085  (xmin, xmax, ymin, ymax)
+coord. ref. : WGS 84 / UTM zone 12N (EPSG:32612) 
+source      : landsat.tif 
+name        : landsat_4 
+min value   :      5252 
+max value   :     31961 </code></pre>
+</div>
+</div>
+<p>The opposite operation, combining several <code>SpatRaster</code> objects into one, can be donde using the <code>c</code> function:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb125"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a>multi_rast34 <span class="ot">=</span> <span class="fu">c</span>(</span>
+<span id="cb125-2"><a href="#cb125-2" aria-hidden="true" tabindex="-1"></a>  multi_rast3,</span>
+<span id="cb125-3"><a href="#cb125-3" aria-hidden="true" tabindex="-1"></a>  multi_rast4</span>
+<span id="cb125-4"><a href="#cb125-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
 </section>
+</section>
+<section id="coordinate-reference-systems-crs" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Coordinate Reference Systems (CRS)</h1>
 </section>
 
 </main>
