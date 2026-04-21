@@ -174,3 +174,7 @@ sfg_linestring(obj = m)
 # dataframes
 df = data.frame(x = 1:4, y = 4:1)
 sfg_polygon(obj = df)
+
+# Units ----
+luxembourg <- world[world$name_long == "Luxembourg", ]
+st_area(luxembourg)

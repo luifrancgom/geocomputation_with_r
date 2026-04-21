@@ -16,6 +16,7 @@ library(spData)
 library(tidyverse)
 library(sfheaders)
 library(terra)
+library(units)
 ```
 
 # Prerrequisites
@@ -744,3 +745,111 @@ multi_rast34 = c(
 ```
 
 # Coordinate Reference Systems (CRS)
+
+CRS defines how the spatial elements of the data relate to the surve of the Earth (or other bodies). CRS are either geographic or projected.
+
+## Geographic coordinate reference systems
+
+Geographic CRS's identify any location on the Earth's surface using 2 values: longitude and latitude. Longitude is location in the East-West direction in angular distance form the Prime Meridian plane. Latitude is angular distance North or South of the equatorial plane.
+
+Distances in geographic CRS are therefore not measured in meters. The surface of the Earth in geographic CRS's is represented by a spherical or ellipsoidal surface. Speherical models assume that the Earth is a perfect sphere of a given radius, they gave the advantage of simplicity but, at the same time, they are inaccurate as the Earth is not exactly a sphere.
+
+Ellipsoidal models are slightly more accurate, and are defined by 2 parameters: the equatiorial radius and the polar radius. 
+
+Ellipsoids are part of a wider component of CRS's: the datum. This contains information on what ellipsoid to use and the precise relationship between the corrdinates and location on the Earth's surface. There are 2 types of datum:
+
+- Geometric (such as `WGS84`)
+- Local (such as `NAD83`)
+
+## Projected coordinate reference systems
+
+All projected CRS's are based on a geographic CRS, described in the previous section, and rely on map projections to convert the 3-dimensional surface of the EArh into Easting and Northing (x and y) values in a projected CRS.
+
+Projected CRS's are based on Cartesian coordinates on an implicitly flat surface. They have and origin, x and y axes, and a linear unit of measurement such as meters.
+
+This transition cannot be done without adding some deformations. Therefore, some properties of the Earth's surfave are distorted in this process, such as area, direction, distanca and shape. A projected coordiante reference system can preserve only 1 or 2 of those properties.
+
+There are 3 main groups of prjection types: conic, cylindrical and planar (azimuthal). A quick summary of different projections, their types, properties and suitability can be found at [www.geo-projections.com](https://www.geo-projections.com/) 
+
+For now, it is sufficient to know:
+
+- That coordinate systems are key componet of geographic objects
+- Which CRS you data is in and whether it is geographic (longitude/latitude) or projected (typically meters), is important and has conseguiences for how R handles spatial and geometry operations
+- That CRs's of `sf` objects can be queried with the function `st_crs()` and CRS's of terra ojbects can be queried with the function `crs()`
+
+# Units
+
+An important feature of CRS's is that they contain information about spatial units. It is good cartographic practice to add a scale bar or some other distance indicator onto maps to demonstrate the relationship between distances on the page or screen and idstances on the ground.
+
+A novel feature of geometry data in `sf` objects is that they have native support for units. This means that distance, area and other geometric calculations in `sf` return values that come with a `units` attribute, defined by the `units` package.
+
+For example lets demonstrate the calculation of the area of Luxembourg:
+
+```{r}
+luxembourg <- world[world$name_long == "Luxembourg", ]
+st_area(luxembourg)
+```
+
+The out is in units of square meters (m2), showing that the result represents 2-dimensional space.
+
+If you want to change the units you can use the `units` package:
+
+```{r}
+units::set_units(st_area(luxembourg), value = km^2)
+```
+
+Units are of equal importante in the case of raster data. However, so far `sf` is the only spatial package that supports units, meaning that people working on raster data should approach changes in the units of analysis with case.
+
+# Exercises
+
+::: {#exr-chap2-1}
+Use `summary` on geometry column  of the `world` data object that is included in the `spData` package. What does the output tell us about:
+
+- The geometry type?
+- The number or countries?
+- Its coordinate reference system (CRS)?
+:::
+
+::: {#sol-chap2-1}
+- The geometry type is a `MULTIPOLYGON`
+- It doesn't specify the number of countries because `name_long` is of character type and not a factor
+- The coordinate reference system is `epsg: 4326`
+:::
+
+::: {#exr-chap2-2}
+Run the code that ‘generated’ the map of the world in Section 2.2.3 (Basic map-making). Find two similarities and two differences between the image on your computer and that in the book.
+
+- What does the cex argument do (see ?plot)?
+- Why was cex set to the sqrt(world$pop) / 10000?
+- Bonus: experiment with different ways to visualize the global population.
+:::
+
+::: {#sol-chap2-2}
+I this case we have the following:
+
+```{r}
+plot(world["continent"], reset = FALSE)
+cex <- sqrt(world$pop) / 10000
+world_cents <- st_centroid(world, of_largest_polygon = TRUE)
+plot(st_geometry(world_cents), add = TRUE, cex = cex)
+```
+
+The different is that the centroids that represent the population are distorted. Also I obtain a legend with the continents. In the case of the similarities I obtain the same colors and the plot in a different geometry.
+
+- The meaning of cex gives the amout by which plotting characters and symbols should be scales relative to the default.
+- You need to rescale every that of the population
+:::
+
+::: {#exr-chap2-3}
+Use `plot()` to create maps of Nigeria in context
+
+:::
+
+::: {#sol-chap2-3}
+```{r}
+nigeria = world[world$name_long == "Nigeria", ]
+world_africa = world[world$continent == "Africa", ]
+plot(st_geometry(nigeria), expandBB = c(3, 3, 2, 8), col = "gray", lwd = 3)
+plot(st_geometry(world_africa), add = TRUE)
+```
+:::
