@@ -178,3 +178,13 @@ sfg_polygon(obj = df)
 # Units ----
 luxembourg <- world[world$name_long == "Luxembourg", ]
 st_area(luxembourg)
+
+# Exercises
+world |>
+  glimpse()
+
+world |>
+  summary()
+
+plot(world["continent"], reset = FALSE)
+st_crs(world)

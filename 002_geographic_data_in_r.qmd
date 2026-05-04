@@ -843,13 +843,73 @@ The different is that the centroids that represent the population are distorted.
 ::: {#exr-chap2-3}
 Use `plot()` to create maps of Nigeria in context
 
+- Adjust `lwd`, `col` and `expandBB`
+- Read the documentation of `text()` and annotate the map
+
 :::
 
 ::: {#sol-chap2-3}
 ```{r}
+#| warning: false
 nigeria = world[world$name_long == "Nigeria", ]
 world_africa = world[world$continent == "Africa", ]
-plot(st_geometry(nigeria), expandBB = c(3, 3, 2, 8), col = "gray", lwd = 3)
+
+# Coordinates
+coords_nigeria = nigeria |>
+  st_centroid() |>
+  st_coordinates()
+
+plot(
+  st_geometry(nigeria),
+  # c(bottom, left, top, right)
+  expandBB = c(5, 2, 3, 4),
+  col = "gray",
+  lwd = 3
+)
 plot(st_geometry(world_africa), add = TRUE)
+text(
+  x = coords_nigeria[1, 1],
+  y = coords_nigeria[1, 2],
+  labels = "Nigeria",
+  cex = 0.5
+)
+```
+:::
+
+::: {#exr-chap2-4}
+Create an empty `SpatRaster` object called `my_raster` with 10 columns and 10 rows. Assign random values between `0` and `10` to the new raster and plot it.
+::: 
+
+::: {#sol-chap2-4}
+```{r}
+my_raster <- rast(
+  nrows = 10,
+  ncols = 10,
+  xmin = 0,
+  xmax = 11,
+  ymin = 0,
+  ymax = 11,
+  vals = runif(n = 100, min = 0, max = 10)
+)
+
+plot(my_raster)
+```
+:::
+
+::: {#exr-chap2-5}
+Read-in the `raster/nlcd.tif` file from the `spDataLarge` package. What kind of information can you get about the properties of this file?
+:::
+
+::: {#sol-chap2-5}
+
+```{r}
+raster_filepath <- system.file(
+  "raster/nlcd.tif",
+  package = "spDataLarge"
+)
+
+my_raster_2 <- rast(raster_filepath)
+
+plot(my_raster_2)
 ```
 :::
