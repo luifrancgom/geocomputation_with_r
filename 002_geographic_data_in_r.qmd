@@ -913,3 +913,34 @@ my_raster_2 <- rast(raster_filepath)
 plot(my_raster_2)
 ```
 :::
+
+::: {#exr-chap2-6}
+Check the CRS of the `raster/nlcd.tif` file form the `spDataLarge` package. What kind of information you can learn from it?
+:::
+
+::: {#sol-chap2-6}
+```{r}
+st_crs(my_raster_2)
+```
+
+So we have that `PROJCRS` points out the this is a projected coordiante system where the human readable label is `NAD83 / UTM zone 12N`
+
+In relation to `BASEGEOGCRS` we have that every flat map starts with a 3D globe. This section describes the "Globe" part of the data:
+
+- `DATUM`: The geodetic reference frame. It identifies which model of the Earth's physical crust is bein used
+
+- `ELLIPSOID`: The mathematical "egg" shape
+
+- `PRIMEM`: The Prime Meridian (in this case Greenwich)
+
+In relation to `CONVERSION` this is the mathematical instructions for "flattening" the globe.
+
+- `METHOD`: The algorithm used (in our case Transverse Mercator)
+
+- `PARAMETER`: The specific variables for that algorithm
+
+In relation to `CS` and `AXIS` this defines how the coordinates are written in your data frames or files
+
+- `CS[Cartesian,2]`: tells R that the data is a 2D flat grid
+- `AXIS`: `ORDER[1]` define the first number is Easting(x) and `ORDER[2]` that the second number is Northing (y)
+:::

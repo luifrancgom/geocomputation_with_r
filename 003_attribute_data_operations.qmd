@@ -1,0 +1,80 @@
+---
+title: Attribute data operations
+format: 
+  html:
+    toc: true
+    number-sections: true
+    code-fold: true
+    embed-resources: true
+---
+
+```{r}
+#| label: load-r-packages
+#| message: false
+library(sf)
+library(terra)
+library(tidyverse)
+library(spData)
+```
+
+# Vector Attribute manipulation
+
+Geographic vector datasets are well supported in R thanks to the `sf` class, which extends base R's `data.frame`.
+
+`sf` objects differ from basic data frames because they have a `geometry` column of class `sfc` which contain a range of geographic entities
+
+**sf** also provides generics that allow `sf` objects to behavie like regular data frames, as shown by printing the class's methods:
+
+```{r}
+methods(class = "sf")[1:10]
+```
+
+Let's start by using base R functions to learn about the `world` dataset from the `spData` package:
+
+```{r}
+class(world)
+```
+
+```{r}
+dim(world)
+```
+
+Dropping geometry column before working with attribute data can be useful. Data manipulation processes can run faster when they work only on the attribute data and geometry columns are not always needed.
+
+```{r}
+world_df <- st_drop_geometry(world)
+ncol(world_df)
+```
+
+## Vector attribute subsetting
+
+Base R subsettings methods include the operator `[` and the function `subset()`. The key `dplyr` subsetting functions are `filter()` and `slice()` for subsetting rows and `select()` for subsetting columns. Both approaches preserve the spatial components of attribute data in `sf` objetcs.
+
+Using the operation `$` or the `dplyr` function `pull()` will lose the geometry data.
+
+The command `object[i,j]` means return the rows represented by `i` and the columns represented by `j`, where `i` and `j` typically contain integers or `TRUE`'s and `FALSE`'s.
+
+```{r}
+# Subset rows by position
+world[1:6, ]
+# Subset columns by position
+world[, 1:3]
+# Subset rows and columns by position
+world[1:6, 1:3]
+# Columns by name
+world[, c("name_long", "pop")]
+# Logical indices
+world[, c(
+  TRUE,
+  TRUE,
+  FALSE,
+  FALSE,
+  FALSE,
+  FALSE,
+  FALSE,
+  TRUE,
+  TRUE,
+  FALSE,
+  FALSE
+)]
+```

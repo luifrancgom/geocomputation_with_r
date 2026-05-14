@@ -188,3 +188,27 @@ world |>
 
 plot(world["continent"], reset = FALSE)
 st_crs(world)
+
+my_raster <- rast(
+  nrows = 10,
+  ncols = 10,
+  xmin = 0,
+  xmax = 11,
+  ymin = 0,
+  ymax = 11,
+  vals = runif(n = 100, min = 0, max = 10)
+)
+
+plot(my_raster)
+
+raster_filepath <- system.file(
+  "raster/nlcd.tif",
+  package = "spDataLarge"
+)
+
+my_raster_2 <- rast(raster_filepath)
+
+plot(my_raster_2)
+
+my_raster_2 |>
+  st_crs()
